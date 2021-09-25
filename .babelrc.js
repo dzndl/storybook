@@ -12,13 +12,30 @@ const withTests = {
   ],
 };
 
+// type BabelMode = 'cjs' | 'esm' | 'modern';
+
+const modules = process.env.BABEL_MODE === 'cjs' ? 'auto' : false;
+
+// FIXME: optional chaining introduced in chrome 80, not supported by wepback4
+// https://github.com/webpack/webpack/issues/10227#issuecomment-642734920
+const targets = process.env.BABEL_MODE === 'modern' ? { chrome: '79' } : 'defaults';
+
 module.exports = {
   ignore: [
     './lib/codemod/src/transforms/__testfixtures__',
     './lib/postinstall/src/__testfixtures__',
   ],
   presets: [
-    ['@babel/preset-env', { shippedProposals: true, useBuiltIns: 'usage', corejs: '3' }],
+    [
+      '@babel/preset-env',
+      {
+        shippedProposals: true,
+        useBuiltIns: 'usage',
+        corejs: '3',
+        targets,
+        modules,
+      },
+    ],
     '@babel/preset-typescript',
     '@babel/preset-react',
     '@babel/preset-flow',
@@ -31,6 +48,7 @@ module.exports = {
       },
     ],
     ['@babel/plugin-proposal-class-properties', { loose: true }],
+    ['@babel/plugin-proposal-private-methods', { loose: true }],
     '@babel/plugin-proposal-export-default-from',
     '@babel/plugin-syntax-dynamic-import',
     ['@babel/plugin-proposal-object-rest-spread', { loose: true, useBuiltIns: true }],
@@ -43,7 +61,7 @@ module.exports = {
   overrides: [
     {
       test: './examples/vue-kitchen-sink',
-      presets: ['babel-preset-vue'],
+      presets: ['@vue/babel-preset-jsx'],
       env: {
         test: withTests,
       },
@@ -51,7 +69,16 @@ module.exports = {
     {
       test: './lib',
       presets: [
-        ['@babel/preset-env', { shippedProposals: true, useBuiltIns: 'usage', corejs: '3' }],
+        [
+          '@babel/preset-env',
+          {
+            shippedProposals: true,
+            useBuiltIns: 'usage',
+            corejs: '3',
+            modules,
+            targets,
+          },
+        ],
         '@babel/preset-react',
       ],
       plugins: [
@@ -61,7 +88,6 @@ module.exports = {
         ['@babel/plugin-proposal-class-properties', { loose: true }],
         'babel-plugin-macros',
         ['emotion', { sourceMap: true, autoLabel: true }],
-        '@babel/plugin-transform-react-constant-elements',
         'babel-plugin-add-react-displayname',
       ],
       env: {
@@ -71,6 +97,11 @@ module.exports = {
     {
       test: [
         './lib/node-logger',
+        './lib/core',
+        './lib/core-common',
+        './lib/core-server',
+        './lib/builder-webpack4',
+        './lib/builder-webpack5',
         './lib/codemod',
         './addons/storyshots',
         '**/src/server/**',
@@ -83,8 +114,9 @@ module.exports = {
             shippedProposals: true,
             useBuiltIns: 'usage',
             targets: {
-              node: '8.11',
+              node: '10',
             },
+            modules,
             corejs: '3',
           },
         ],
@@ -103,6 +135,23 @@ module.exports = {
       env: {
         test: withTests,
       },
+    },
+    {
+      test: ['**/virtualModuleEntry.template.js'],
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            shippedProposals: true,
+            useBuiltIns: 'usage',
+            targets: {
+              node: '10',
+            },
+            corejs: '3',
+            modules: false,
+          },
+        ],
+      ],
     },
   ],
 };

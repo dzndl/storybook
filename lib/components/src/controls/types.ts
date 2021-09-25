@@ -1,21 +1,25 @@
+import { ArgType } from '../blocks';
+
 /* eslint-disable @typescript-eslint/no-empty-interface */
 export interface ControlProps<T> {
   name: string;
-  value: T;
+  value?: T;
   defaultValue?: T;
-  onChange: (name: string, value: T) => T | void;
-}
-
-export type ArrayValue = string[] | readonly string[];
-export interface ArrayConfig {
-  separator?: string;
+  argType?: ArgType;
+  onChange: (value: T) => T | void;
+  onFocus?: (evt: any) => void;
+  onBlur?: (evt: any) => void;
 }
 
 export type BooleanValue = boolean;
 export interface BooleanConfig {}
 
 export type ColorValue = string;
-export interface ColorConfig {}
+export type PresetColor = ColorValue | { color: ColorValue; title?: string };
+export interface ColorConfig {
+  presetColors?: PresetColor[];
+  startOpen?: boolean;
+}
 
 export type DateValue = Date | number;
 export interface DateConfig {}
@@ -46,15 +50,15 @@ export type OptionsControlType =
   | 'select'
   | 'multi-select';
 
-export type OptionsConfig = {
+export interface OptionsConfig {
+  labels: Record<any, string>;
   options: Options;
-  controlType: OptionsControlType;
-};
+  type: OptionsControlType;
+}
 
-export type NormalizedOptionsConfig = {
+export interface NormalizedOptionsConfig {
   options: OptionsObject;
-  controlType: OptionsControlType;
-};
+}
 
 export type TextValue = string;
 export interface TextConfig {}
@@ -71,7 +75,6 @@ export type ControlType =
   | 'text';
 
 export type Control =
-  | ArrayConfig
   | BooleanConfig
   | ColorConfig
   | DateConfig

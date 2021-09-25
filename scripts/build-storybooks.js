@@ -1,15 +1,10 @@
-#!/usr/bin/env node
+import { spawn } from 'child_process';
+import { promisify } from 'util';
+import { readdir as readdirRaw, writeFile as writeFileRaw, readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
-const { spawn } = require('child_process');
-const { promisify } = require('util');
-const {
-  readdir: readdirRaw,
-  readFile: readFileRaw,
-  writeFile: writeFileRaw,
-  statSync,
-  readFileSync,
-} = require('fs');
-const { join } = require('path');
+import { getDeployables } from './utils/list-examples';
+import { filterDataForCurrentCircleCINode } from './utils/concurrency';
 
 const readdir = promisify(readdirRaw);
 const writeFile = promisify(writeFileRaw);
@@ -34,19 +29,6 @@ const exec = async (command, args = [], options = {}) =>
         reject();
       });
   });
-
-const getDeployables = (files) => {
-  return files.filter((f) => {
-    const packageJsonLocation = p(['examples', f, 'package.json']);
-    let stats = null;
-    try {
-      stats = statSync(packageJsonLocation);
-    } catch (e) {
-      // the folder had no package.json, we'll ignore
-    }
-    return stats && stats.isFile() && hasBuildScript(packageJsonLocation);
-  });
-};
 
 const hasBuildScript = (l) => {
   const text = readFileSync(l, 'utf8');
@@ -140,8 +122,16 @@ const handleExamples = async (deployables) => {
     const out = p(['built-storybooks', d]);
     const cwd = p(['examples', d]);
 
+    if (existsSync(join(cwd, 'yarn.lock'))) {
+      await exec(`yarn`, [`install`], { cwd });
+    }
+
     await exec(`yarn`, [`build-storybook`, `--output-dir=${out}`, '--quiet'], { cwd });
-    await exec(`npx`, [`sb`, 'extract', out, `${out}/stories.json`], { cwd });
+
+    // If the example uses `storyStoreV7` or `buildStoriesJson`, stories.json already exists
+    if (!existsSync(`${out}/stories.json`)) {
+      await exec(`npx`, [`sb`, 'extract', out, `${out}/stories.json`], { cwd });
+    }
 
     logger.log('-------');
     logger.log(`✅ ${d} built`);
@@ -150,18 +140,11 @@ const handleExamples = async (deployables) => {
 };
 
 const run = async () => {
-  const examples = await readdir(p(['examples']));
-
-  const { length } = examples;
-  const [a, b] = [process.env.CIRCLE_NODE_INDEX || 0, process.env.CIRCLE_NODE_TOTAL || 1];
-  const step = Math.ceil(length / b);
-  const offset = step * a;
-
-  const list = examples.slice().splice(offset, step);
-  const deployables = getDeployables(list);
+  const list = getDeployables(await readdir(p(['examples'])), hasBuildScript);
+  const deployables = filterDataForCurrentCircleCINode(list);
 
   if (deployables.length) {
-    logger.log(`will build: ${deployables.join(', ')}`);
+    logger.log(`🏗 Will build Storybook for: ${deployables.join(', ')}`);
     await handleExamples(deployables);
   }
 

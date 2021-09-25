@@ -1,3 +1,4 @@
+/** @jsxRuntime classic */
 /** @jsx h */
 
 import global from 'global';
@@ -15,13 +16,13 @@ function test(options: StoryshotsOptions): boolean {
 function load(options: StoryshotsOptions) {
   global.STORYBOOK_ENV = 'preact';
 
-  const storybook = require.requireActual('@storybook/preact');
+  const storybook = jest.requireActual('@storybook/preact');
 
   configure({ ...options, storybook });
 
   return {
     framework: 'preact' as const,
-    renderTree: require.requireActual('./renderTree').default,
+    renderTree: jest.requireActual('./renderTree').default,
     renderShallowTree: () => {
       throw new Error('Shallow renderer is not supported for preact');
     },

@@ -1,11 +1,20 @@
 /* eslint-disable no-underscore-dangle */
 /* global window */
 
-import { PropDef } from '@storybook/components';
 import { ArgType, ArgTypes } from '@storybook/api';
-import { Argument, CompodocJson, Component, Method, Property, Directive } from './types';
-
-type Sections = Record<string, PropDef[]>;
+import { logger } from '@storybook/client-logger';
+import {
+  Argument,
+  Class,
+  CompodocJson,
+  Component,
+  Injectable,
+  Method,
+  Pipe,
+  Property,
+  Directive,
+  JsDocTag,
+} from './types';
 
 export const isMethod = (methodOrProp: Method | Property): methodOrProp is Method => {
   return (methodOrProp as Method).args !== undefined;
@@ -17,7 +26,7 @@ export const setCompodocJson = (compodocJson: CompodocJson) => {
 };
 
 // @ts-ignore
-export const getCompdocJson = (): CompodocJson => window.__STORYBOOK_COMPODOC_JSON__;
+export const getCompodocJson = (): CompodocJson => window.__STORYBOOK_COMPODOC_JSON__;
 
 export const checkValidComponentOrDirective = (component: Component | Directive) => {
   if (!component.name) {
@@ -34,7 +43,7 @@ export const checkValidCompodocJson = (compodocJson: CompodocJson) => {
 const hasDecorator = (item: Property, decoratorName: string) =>
   item.decorators && item.decorators.find((x: any) => x.name === decoratorName);
 
-const mapPropertyToSection = (key: string, item: Property) => {
+const mapPropertyToSection = (item: Property) => {
   if (hasDecorator(item, 'ViewChild')) {
     return 'view child';
   }
@@ -52,17 +61,19 @@ const mapPropertyToSection = (key: string, item: Property) => {
 
 const mapItemToSection = (key: string, item: Method | Property): string => {
   switch (key) {
+    case 'methods':
     case 'methodsClass':
       return 'methods';
     case 'inputsClass':
       return 'inputs';
     case 'outputsClass':
       return 'outputs';
+    case 'properties':
     case 'propertiesClass':
       if (isMethod(item)) {
         throw new Error("Cannot be of type Method if key === 'propertiesClass'");
       }
-      return mapPropertyToSection(key, item);
+      return mapPropertyToSection(item);
     default:
       throw new Error(`Unknown key: ${key}`);
   }
@@ -70,17 +81,27 @@ const mapItemToSection = (key: string, item: Method | Property): string => {
 
 export const findComponentByName = (name: string, compodocJson: CompodocJson) =>
   compodocJson.components.find((c: Component) => c.name === name) ||
-  compodocJson.directives.find((c: Directive) => c.name === name);
+  compodocJson.directives.find((c: Directive) => c.name === name) ||
+  compodocJson.pipes.find((c: Pipe) => c.name === name) ||
+  compodocJson.injectables.find((c: Injectable) => c.name === name) ||
+  compodocJson.classes.find((c: Class) => c.name === name);
 
 const getComponentData = (component: Component | Directive) => {
   if (!component) {
     return null;
   }
   checkValidComponentOrDirective(component);
-  const compodocJson = getCompdocJson();
+  const compodocJson = getCompodocJson();
+  if (!compodocJson) {
+    return null;
+  }
   checkValidCompodocJson(compodocJson);
   const { name } = component;
-  return findComponentByName(name, compodocJson);
+  const metadata = findComponentByName(name, compodocJson);
+  if (!metadata) {
+    logger.warn(`Component not found in compodoc JSON: '${name}'`);
+  }
+  return metadata;
 };
 
 const displaySignature = (item: Method): string => {
@@ -90,25 +111,154 @@ const displaySignature = (item: Method): string => {
   return `(${args.join(', ')}) => ${item.returnType}`;
 };
 
-export const extractArgTypesFromData = (componentData: Directive) => {
+const extractTypeFromValue = (defaultValue: any) => {
+  const valueType = typeof defaultValue;
+  return defaultValue || valueType === 'number' || valueType === 'boolean' || valueType === 'string'
+    ? valueType
+    : null;
+};
+
+const extractEnumValues = (compodocType: any) => {
+  const compodocJson = getCompodocJson();
+  const enumType = compodocJson?.miscellaneous.enumerations.find((x) => x.name === compodocType);
+
+  if (enumType?.childs.every((x) => x.value)) {
+    return enumType.childs.map((x) => x.value);
+  }
+
+  if (typeof compodocType !== 'string' || compodocType.indexOf('|') === -1) {
+    return null;
+  }
+
+  try {
+    return compodocType.split('|').map((value) => JSON.parse(value));
+  } catch (e) {
+    return null;
+  }
+};
+
+export const extractType = (property: Property, defaultValue: any) => {
+  const compodocType = property.type || extractTypeFromValue(defaultValue);
+  switch (compodocType) {
+    case 'string':
+    case 'boolean':
+    case 'number':
+      return { name: compodocType };
+    case undefined:
+    case null:
+      return { name: 'void' };
+    default: {
+      const resolvedType = resolveTypealias(compodocType);
+      const enumValues = extractEnumValues(resolvedType);
+      return enumValues ? { name: 'enum', value: enumValues } : { name: 'object' };
+    }
+  }
+};
+
+const castDefaultValue = (property: Property, defaultValue: any) => {
+  const compodocType = property.type;
+
+  // All these checks are necessary as compodoc does not always set the type ie. @HostBinding have empty types.
+  // null and undefined also have 'any' type
+  if (['boolean', 'number', 'string', 'EventEmitter'].includes(compodocType)) {
+    switch (compodocType) {
+      case 'boolean':
+        return defaultValue === 'true';
+      case 'number':
+        return Number(defaultValue);
+      case 'EventEmitter':
+        return undefined;
+      default:
+        return defaultValue;
+    }
+  } else {
+    switch (defaultValue) {
+      case 'true':
+        return true;
+      case 'false':
+        return false;
+      case 'null':
+        return null;
+      case 'undefined':
+        return undefined;
+      default:
+        return defaultValue;
+    }
+  }
+};
+
+const extractDefaultValueFromComments = (property: Property, value: any) => {
+  let commentValue = value;
+  property.jsdoctags.forEach((tag: JsDocTag) => {
+    if (['default', 'defaultvalue'].includes(tag.tagName.escapedText)) {
+      // @ts-ignore
+      const dom = new window.DOMParser().parseFromString(tag.comment, 'text/html');
+      commentValue = dom.body.textContent;
+    }
+  });
+  return commentValue;
+};
+
+const extractDefaultValue = (property: Property) => {
+  try {
+    let value: string | boolean = property.defaultValue?.replace(/^'(.*)'$/, '$1');
+    value = castDefaultValue(property, value);
+
+    if (value == null && property.jsdoctags?.length > 0) {
+      value = extractDefaultValueFromComments(property, value);
+    }
+
+    return value;
+  } catch (err) {
+    logger.debug(`Error extracting ${property.name}: ${property.defaultValue}`);
+    return undefined;
+  }
+};
+
+const resolveTypealias = (compodocType: string): string => {
+  const compodocJson = getCompodocJson();
+  const typeAlias = compodocJson?.miscellaneous.typealiases.find((x) => x.name === compodocType);
+  return typeAlias ? resolveTypealias(typeAlias.rawtype) : compodocType;
+};
+
+export const extractArgTypesFromData = (componentData: Class | Directive | Injectable | Pipe) => {
   const sectionToItems: Record<string, ArgType[]> = {};
-  const compodocClasses = ['propertiesClass', 'methodsClass', 'inputsClass', 'outputsClass'];
-  type COMPODOC_CLASS = 'propertiesClass' | 'methodsClass' | 'inputsClass' | 'outputsClass';
+  const compodocClasses = ['component', 'directive'].includes(componentData.type)
+    ? ['propertiesClass', 'methodsClass', 'inputsClass', 'outputsClass']
+    : ['properties', 'methods'];
+  type COMPODOC_CLASS =
+    | 'properties'
+    | 'methods'
+    | 'propertiesClass'
+    | 'methodsClass'
+    | 'inputsClass'
+    | 'outputsClass';
 
   compodocClasses.forEach((key: COMPODOC_CLASS) => {
-    const data = componentData[key] || [];
+    const data = (componentData as any)[key] || [];
     data.forEach((item: Method | Property) => {
       const section = mapItemToSection(key, item);
+      const defaultValue = isMethod(item) ? undefined : extractDefaultValue(item as Property);
+
+      const type =
+        isMethod(item) || (section !== 'inputs' && section !== 'properties')
+          ? { name: 'void' }
+          : extractType(item as Property, defaultValue);
+      const action = section === 'outputs' ? { action: item.name } : {};
+
       const argType = {
         name: item.name,
-        description: item.description,
-        defaultValue: { summary: isMethod(item) ? '' : item.defaultValue },
+        description: item.rawdescription || item.description,
+        defaultValue,
+        type,
+        ...action,
         table: {
           category: section,
           type: {
             summary: isMethod(item) ? displaySignature(item) : item.type,
             required: isMethod(item) ? false : !item.optional,
           },
+          defaultValue: { summary: defaultValue },
         },
       };
 
@@ -120,9 +270,9 @@ export const extractArgTypesFromData = (componentData: Directive) => {
   });
 
   const SECTIONS = [
+    'properties',
     'inputs',
     'outputs',
-    'properties',
     'methods',
     'view child',
     'view children',
@@ -149,8 +299,5 @@ export const extractArgTypes = (component: Component | Directive) => {
 
 export const extractComponentDescription = (component: Component | Directive) => {
   const componentData = getComponentData(component);
-  if (!componentData) {
-    return null;
-  }
-  return componentData.rawdescription;
+  return componentData && (componentData.rawdescription || componentData.description);
 };

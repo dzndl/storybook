@@ -1,17 +1,12 @@
 import React, { Fragment, FunctionComponent, useMemo, useEffect, useState } from 'react';
-import { Global, CSSObject } from '@storybook/theming';
+import { Consumer, Combo } from '@storybook/api';
+import { Button } from '@storybook/components';
+import { Global, CSSObject, styled } from '@storybook/theming';
 import { IFrame } from './iframe';
 import { FramesRendererProps } from './utils/types';
 import { stringifyQueryParams } from './utils/stringifyQueryParams';
 
-const getActive = (
-  refId: FramesRendererProps['refId'],
-  storyId: FramesRendererProps['storyId']
-) => {
-  if (storyId === '*') {
-    return undefined;
-  }
-
+const getActive = (refId: FramesRendererProps['refId']) => {
   if (refId) {
     return `storybook-ref-${refId}`;
   }
@@ -19,18 +14,45 @@ const getActive = (
   return 'storybook-preview-iframe';
 };
 
+const SkipToSidebarLink = styled(Button)(({ theme }) => ({
+  display: 'none',
+  '@media (min-width: 600px)': {
+    display: 'block',
+    position: 'absolute',
+    top: 10,
+    right: 15,
+    padding: '10px 15px',
+    fontSize: theme.typography.size.s1,
+    transform: 'translateY(-100px)',
+    '&:focus': {
+      transform: 'translateY(0)',
+      zIndex: 1,
+    },
+  },
+}));
+
+const whenSidebarIsVisible = ({ state }: Combo) => ({
+  isFullscreen: state.layout.isFullscreen,
+  showNav: state.layout.showNav,
+  selectedStoryId: state.storyId,
+});
+
 export const FramesRenderer: FunctionComponent<FramesRendererProps> = ({
   refs,
   story,
   scale,
-  viewMode,
+  viewMode = 'story',
   refId,
-  queryParams,
+  queryParams = {},
   baseUrl,
-  storyId,
+  storyId = '*',
 }) => {
-  const stringifiedQueryParams = stringifyQueryParams(queryParams);
-  const active = getActive(refId, storyId);
+  const version = refs[refId]?.version;
+  const stringifiedQueryParams = stringifyQueryParams({
+    ...queryParams,
+    ...(version && { version }),
+  });
+  const active = getActive(refId);
 
   const styles = useMemo<CSSObject>(() => {
     return {
@@ -41,7 +63,7 @@ export const FramesRenderer: FunctionComponent<FramesRendererProps> = ({
         visibility: 'visible',
       },
     };
-  }, [refs]);
+  }, []);
 
   const [frames, setFrames] = useState<Record<string, string>>({
     'storybook-preview-iframe': `${baseUrl}?id=${storyId}&viewMode=${viewMode}${stringifiedQueryParams}`,
@@ -50,7 +72,10 @@ export const FramesRenderer: FunctionComponent<FramesRendererProps> = ({
   useEffect(() => {
     const newFrames = Object.values(refs)
       .filter((r) => {
-        if (r.startInjected) {
+        if (r.error) {
+          return false;
+        }
+        if (r.type === 'auto-inject') {
           return true;
         }
         if (story && r.id === story.refId) {
@@ -62,7 +87,7 @@ export const FramesRenderer: FunctionComponent<FramesRendererProps> = ({
       .reduce((acc, r) => {
         return {
           ...acc,
-          [`storybook-ref-${r.id}`]: `${r.url}/iframe.html?id=${storyId}&viewMode=${viewMode}${stringifiedQueryParams}`,
+          [`storybook-ref-${r.id}`]: `${r.url}/iframe.html?id=${storyId}&viewMode=${viewMode}&refId=${r.id}${stringifiedQueryParams}`,
         };
       }, frames);
 
@@ -72,6 +97,18 @@ export const FramesRenderer: FunctionComponent<FramesRendererProps> = ({
   return (
     <Fragment>
       <Global styles={styles} />
+      <Consumer filter={whenSidebarIsVisible}>
+        {({ isFullscreen, showNav, selectedStoryId }) => {
+          if (!isFullscreen && !!showNav && selectedStoryId) {
+            return (
+              <SkipToSidebarLink secondary isLink tabIndex={0} href={`#${selectedStoryId}`}>
+                Skip to sidebar
+              </SkipToSidebarLink>
+            );
+          }
+          return null;
+        }}
+      </Consumer>
       {Object.entries(frames).map(([id, src]) => (
         <Fragment key={id}>
           <IFrame

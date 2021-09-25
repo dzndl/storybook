@@ -1,14 +1,50 @@
-const { console } = global;
+import global from 'global';
 
-/* tslint:disable: no-console */
+const { LOGLEVEL, console } = global;
+
+type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
+
+const levels: Record<LogLevel, number> = {
+  trace: 1,
+  debug: 2,
+  info: 3,
+  warn: 4,
+  error: 5,
+  silent: 10,
+};
+
+const currentLogLevelString: LogLevel = LOGLEVEL as LogLevel;
+const currentLogLevelNumber: number = levels[currentLogLevelString] || levels.info;
 
 export const logger = {
-  debug: (message: any, ...rest: any[]): void => console.debug(message, ...rest),
-  log: (message: any, ...rest: any[]): void => console.log(message, ...rest),
-  info: (message: any, ...rest: any[]): void => console.info(message, ...rest),
-  warn: (message: any, ...rest: any[]): void => console.warn(message, ...rest),
-  error: (message: any, ...rest: any[]): void => console.error(message, ...rest),
+  trace: (message: any, ...rest: any[]): void =>
+    currentLogLevelNumber <= levels.trace && console.trace(message, ...rest),
+  debug: (message: any, ...rest: any[]): void =>
+    currentLogLevelNumber <= levels.debug && console.debug(message, ...rest),
+  info: (message: any, ...rest: any[]): void =>
+    currentLogLevelNumber <= levels.info && console.info(message, ...rest),
+  warn: (message: any, ...rest: any[]): void =>
+    currentLogLevelNumber <= levels.warn && console.warn(message, ...rest),
+  error: (message: any, ...rest: any[]): void =>
+    currentLogLevelNumber <= levels.error && console.error(message, ...rest),
+  log: (message: any, ...rest: any[]): void =>
+    currentLogLevelNumber < levels.silent && console.log(message, ...rest),
+} as const;
+
+const logged = new Set();
+export const once = (type: keyof typeof logger) => (message: any, ...rest: any[]) => {
+  if (logged.has(message)) return undefined;
+  logged.add(message);
+  return logger[type](message, ...rest);
 };
+
+once.clear = () => logged.clear();
+once.trace = once('trace');
+once.debug = once('debug');
+once.info = once('info');
+once.warn = once('warn');
+once.error = once('error');
+once.log = once('log');
 
 export const pretty = (type: keyof typeof logger) => (...args: string[]) => {
   const argArray = [];
@@ -33,11 +69,11 @@ export const pretty = (type: keyof typeof logger) => (...args: string[]) => {
   }
 
   // eslint-disable-next-line prefer-spread
-  console[type].apply(console, argArray);
+  logger[type].apply(logger, argArray);
 };
 
+pretty.trace = pretty('trace');
 pretty.debug = pretty('debug');
-pretty.log = pretty('log');
 pretty.info = pretty('info');
 pretty.warn = pretty('warn');
 pretty.error = pretty('error');

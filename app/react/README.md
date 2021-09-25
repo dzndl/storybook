@@ -3,7 +3,7 @@
 Storybook for React is a UI development environment for your React components.
 With it, you can visualize different states of your UI components and develop them interactively.
 
-![Storybook Screenshot](https://github.com/storybookjs/storybook/blob/master/media/storybook-intro.gif)
+![Storybook Screenshot](https://github.com/storybookjs/storybook/blob/main/media/storybook-intro.gif)
 
 Storybook runs outside of your app.
 So you can develop UI components in isolation without worrying about app specific dependencies and requirements.
@@ -12,15 +12,15 @@ So you can develop UI components in isolation without worrying about app specifi
 
 ```sh
 cd my-react-app
-npx -p @storybook/cli sb init
+npx sb init
 ```
 
 For more information visit: [storybook.js.org](https://storybook.js.org)
 
 ---
 
-Storybook also comes with a lot of [addons](https://storybook.js.org/addons/introduction) and a great API to customize as you wish.
-You can also build a [static version](https://storybook.js.org/basics/exporting-storybook) of your storybook and deploy it anywhere you want.
+Storybook also comes with a lot of [addons](https://storybook.js.org/docs/react/configure/storybook-addons) and a great API to customize as you wish.
+You can also build a [static version](https://storybook.js.org/docs/react/workflows/publish-storybook) of your storybook and deploy it anywhere you want.
 
 Here are some featured storybooks that you can reference to see how Storybook works:
 
@@ -33,6 +33,8 @@ Support for [Create React App](https://create-react-app.dev/) is handled by [`@s
 
 This preset enables support for all Create React App features, including Sass/SCSS and TypeScript.
 
+If you're working on an app that was initialized manually (i.e., without the use of Create React App), ensure that your app has [react-dom](https://www.npmjs.com/package/react-dom) included as a dependency. Failing to do so can lead to unforeseen issues with Storybook and your project.
+
 ## Typescript
 
 `@storybook/react` is now exporting its own types to use with Typescript.
@@ -41,6 +43,6 @@ But you probably also need to use types from `@types/node @types/react`.
 
 ## Docs
 
-- [Basics](https://storybook.js.org/basics/introduction)
-- [Configurations](https://storybook.js.org/configurations/default-config)
-- [Addons](https://storybook.js.org/addons/introduction)
+- [Basics](https://storybook.js.org/docs/react/get-started/introduction)
+- [Configurations](https://storybook.js.org/docs/react/configure/overview)
+- [Addons](https://storybook.js.org/docs/react/configure/storybook-addons)

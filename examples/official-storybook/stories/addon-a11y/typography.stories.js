@@ -21,24 +21,28 @@ export const Correct = () => (
 
 export const EmptyHeading = () => <h1 />;
 
-EmptyHeading.story = {
-  name: 'Empty Heading',
-};
+EmptyHeading.storyName = 'Empty Heading';
 
 export const EmptyParagraph = () => <p />;
 
-EmptyParagraph.story = {
-  name: 'Empty Paragraph',
-};
+EmptyParagraph.storyName = 'Empty Paragraph';
 
 export const EmptyLink = () => <a href={href} />;
 
-EmptyLink.story = {
-  name: 'Empty Link',
-};
+EmptyLink.storyName = 'Empty Link';
 
 export const LinkWithoutHref = () => <a>{`${text}...`}</a>;
 
-LinkWithoutHref.story = {
-  name: 'Link without href',
+LinkWithoutHref.storyName = 'Link without href';
+
+export const Manual = () => <p>I'm a manual run</p>;
+Manual.parameters = {
+  a11y: {
+    manual: true,
+    config: {
+      disableOtherRules: true,
+      rules: [],
+    },
+    options: {},
+  },
 };

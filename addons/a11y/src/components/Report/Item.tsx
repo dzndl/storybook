@@ -33,6 +33,7 @@ const Icon = styled<any, any>(Icons)(({ theme }) => ({
 const HeaderBar = styled.div<{}>(({ theme }) => ({
   padding: theme.layoutMargin,
   paddingLeft: theme.layoutMargin - 3,
+  lineHeight: '20px',
   background: 'none',
   color: 'inherit',
   textAlign: 'left',
@@ -51,7 +52,10 @@ const HighlightToggleElement = styled.span({
   float: 'right',
   marginRight: 15,
   alignSelf: 'center',
-  input: { margin: 0 },
+  input: {
+    margin: 0,
+    display: 'block',
+  },
 });
 
 interface ItemProps {
@@ -78,14 +82,10 @@ export const Item = (props: ItemProps) => {
               transform: `rotate(${open ? 0 : -90}deg)`,
             }}
           />
-          {item.description}
+          {item.help}
         </HeaderBar>
         <HighlightToggleElement>
-          <HighlightToggle
-            toggleId={highlightToggleId}
-            type={type}
-            elementsToHighlight={item.nodes}
-          />
+          <HighlightToggle toggleId={highlightToggleId} elementsToHighlight={item.nodes} />
         </HighlightToggleElement>
       </Wrapper>
       {open ? (

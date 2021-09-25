@@ -3,7 +3,7 @@
 /* eslint-disable global-require */
 const { resolve } = require('path');
 const terminalSize = require('window-size');
-const { checkDependenciesAndRun, spawn } = require('./cli-utils');
+const { checkDependenciesAndRun, spawn } = require('./utils/cli-utils');
 
 const getStorybookPackages = () => {
   const listCommand = spawn(`lerna list`, {
@@ -19,7 +19,7 @@ const getStorybookPackages = () => {
 };
 
 function run() {
-  const inquirer = require('inquirer');
+  const prompts = require('prompts');
   const program = require('commander');
   const chalk = require('chalk');
   const log = require('npmlog');
@@ -53,11 +53,6 @@ function run() {
     ...packageTasks,
   };
 
-  const groups = {
-    'mode (leave unselected if you just want to build)': ['watch'],
-    packages,
-  };
-
   const main = program.version('5.0.0').option('--all', `build everything ${chalk.gray('(all)')}`);
 
   Object.keys(tasks)
@@ -70,21 +65,6 @@ function run() {
     tasks[key].value = containsFlag || program.all;
   });
 
-  const createSeparator = (input) => `- ${input}${' ---------'.substr(0, 12)}`;
-
-  const choices = Object.values(groups)
-    .map((l) =>
-      l.map((key) => ({
-        name: (tasks[key] && tasks[key].name) || key,
-        checked: (tasks[key] && tasks[key].defaultValue) || false,
-      }))
-    )
-    .reduce(
-      (acc, i, k) =>
-        acc.concat(new inquirer.Separator(createSeparator(Object.keys(groups)[k]))).concat(i),
-      []
-    );
-
   let selection;
   let watchMode = false;
   if (
@@ -92,36 +72,39 @@ function run() {
       .map((key) => tasks[key].value)
       .filter(Boolean).length
   ) {
-    const ui = new inquirer.ui.BottomBar();
-    ui.log.write(
-      chalk.yellow(
-        'You can also run directly with package name like `yarn build core`, or `yarn build --all` for all packages!'
-      )
-    );
-
-    selection = inquirer
-      .prompt([
-        {
-          type: 'checkbox',
-          message: 'Select the packages to build',
-          name: 'todo',
-          pageSize: terminalSize.height - 3, // 3 lines for extra info
-          choices,
-        },
-      ])
-      .then(({ todo }) => {
-        watchMode = todo.includes('watch');
-        return todo
-          .filter((name) => name !== 'watch') // remove watch option as it served its purpose
-          .map((name) => tasks[Object.keys(tasks).find((i) => tasks[i].name === name)]);
-      });
+    selection = prompts([
+      {
+        type: 'toggle',
+        name: 'mode',
+        message: 'Start in watch mode',
+        initial: false,
+        active: 'yes',
+        inactive: 'no',
+      },
+      {
+        type: 'autocompleteMultiselect',
+        message: 'Select the packages to build',
+        name: 'todo',
+        hint:
+          'You can also run directly with package name like `yarn build core`, or `yarn build --all` for all packages!',
+        optionsPerPage: terminalSize.height - 3, // 3 lines for extra info
+        choices: packages.map((key) => ({
+          value: key,
+          title: tasks[key].name || key,
+          selected: (tasks[key] && tasks[key].defaultValue) || false,
+        })),
+      },
+    ]).then(({ mode, todo }) => {
+      watchMode = mode;
+      return todo.map((key) => tasks[key]);
+    });
   } else {
     // hits here when running yarn build --packagename
     watchMode = process.argv.includes('--watch');
     selection = Promise.resolve(
       Object.keys(tasks)
         .map((key) => tasks[key])
-        .filter((item) => item.value === true)
+        .filter((item) => item.name !== 'watch' && item.value === true)
     );
   }
 
@@ -132,44 +115,36 @@ function run() {
       } else {
         const packageNames = list
           // filters out watch command if --watch is used
-          .filter((key) => key.name !== 'watch')
           .map((key) => key.suffix)
           .filter(Boolean);
 
-        const glob =
+        let glob =
           packageNames.length > 1
             ? `@storybook/{${packageNames.join(',')}}`
             : `@storybook/${packageNames[0]}`;
 
+        const isAllPackages = process.argv.includes('--all');
+        if (isAllPackages) {
+          glob = '@storybook/*';
+
+          log.warn(
+            'You are building a lot of packages on watch mode. This is an expensive action and might slow your computer down.\nIf this is an issue, run yarn build to filter packages and speed things up!'
+          );
+        }
+
         if (watchMode) {
           const runWatchMode = () => {
-            const baseWatchCommand = `lerna exec --scope "${glob}" -- cross-env-shell node ${resolve(
+            const baseWatchCommand = `lerna exec --scope '${glob}' --parallel -- cross-env-shell node ${resolve(
               __dirname
             )}`;
-            const watchTsc = `${baseWatchCommand}/watch-tsc.js`;
-            const watchBabel = `${baseWatchCommand}/watch-babel.js`;
-            const command = `concurrently --kill-others "${watchTsc}" "${watchBabel}"`;
+            const watchTsc = `${baseWatchCommand}/utils/watch-tsc.js`;
+            const watchBabel = `${baseWatchCommand}/utils/watch-babel.js`;
+            const command = `concurrently --kill-others-on-fail "${watchTsc}" "${watchBabel}"`;
+
             spawn(command);
           };
 
-          if (packageNames.length < 5) {
-            runWatchMode();
-          } else {
-            inquirer
-              .prompt([
-                {
-                  type: 'confirm',
-                  message:
-                    'You selected a lot of packages on watch mode. This is a very expensive action and might slow your computer down. Do you want to continue?',
-                  name: 'confirmation',
-                },
-              ])
-              .then(({ confirmation }) => {
-                if (confirmation === true) {
-                  runWatchMode();
-                }
-              });
-          }
+          runWatchMode();
         } else {
           spawn(`lerna run prepare --scope "${glob}"`);
         }

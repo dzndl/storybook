@@ -1,21 +1,36 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
-import createCompiler from '@storybook/addon-docs/mdx-compiler-plugin';
 import path from 'path';
 import remarkSlug from 'remark-slug';
 import remarkExternalLinks from 'remark-external-links';
 
-function createBabelOptions(babelOptions?: any, configureJSX?: boolean) {
-  if (!configureJSX) {
-    return babelOptions;
-  }
+// @ts-ignore
+import { createCompiler } from '@storybook/csf-tools/mdx';
 
-  const babelPlugins = (babelOptions && babelOptions.plugins) || [];
+const resolvedBabelLoader = require.resolve('babel-loader', {
+  paths: [require.resolve('@storybook/builder-webpack4')], // FIXME!!!
+});
+
+// for frameworks that are not working with react, we need to configure
+// the jsx to transpile mdx, for now there will be a flag for that
+// for more complex solutions we can find alone that we need to add '@babel/plugin-transform-react-jsx'
+type BabelParams = {
+  babelOptions?: any;
+  mdxBabelOptions?: any;
+  configureJSX?: boolean;
+};
+function createBabelOptions({ babelOptions, mdxBabelOptions, configureJSX }: BabelParams) {
+  const babelPlugins = mdxBabelOptions?.plugins || babelOptions?.plugins || [];
+  const jsxPlugin = [
+    require.resolve('@babel/plugin-transform-react-jsx'),
+    { pragma: 'React.createElement', pragmaFrag: 'React.Fragment' },
+  ];
+  const plugins = configureJSX ? [...babelPlugins, jsxPlugin] : babelPlugins;
   return {
+    // don't use the root babelrc by default (users can override this in mdxBabelOptions)
+    babelrc: false,
+    configFile: false,
     ...babelOptions,
-    // for frameworks that are not working with react, we need to configure
-    // the jsx to transpile mdx, for now there will be a flag for that
-    // for more complex solutions we can find alone that we need to add '@babel/plugin-transform-react-jsx'
-    plugins: [...babelPlugins, '@babel/plugin-transform-react-jsx'],
+    ...mdxBabelOptions,
+    plugins,
   };
 }
 
@@ -25,8 +40,10 @@ export function webpack(webpackConfig: any = {}, options: any = {}) {
   // also, these babel options are chained with other presets.
   const {
     babelOptions,
-    configureJSX = options.framework !== 'react', // if not user-specified
-    sourceLoaderOptions = {},
+    mdxBabelOptions,
+    configureJSX = true,
+    sourceLoaderOptions = { injectStoryParameters: true },
+    transcludeMarkdown = false,
   } = options;
 
   const mdxLoaderOptions = {
@@ -45,18 +62,38 @@ export function webpack(webpackConfig: any = {}, options: any = {}) {
       ]
     : [];
 
+  let rules = module.rules || [];
+  if (transcludeMarkdown) {
+    rules = [
+      ...rules.filter((rule: any) => rule.test.toString() !== '/\\.md$/'),
+      {
+        test: /\.md$/,
+        use: [
+          {
+            loader: resolvedBabelLoader,
+            options: createBabelOptions({ babelOptions, mdxBabelOptions, configureJSX }),
+          },
+          {
+            loader: require.resolve('@mdx-js/loader'),
+            options: mdxLoaderOptions,
+          },
+        ],
+      },
+    ];
+  }
+
   const result = {
     ...webpackConfig,
     module: {
       ...module,
       rules: [
-        ...(module.rules || []),
+        ...rules,
         {
           test: /\.js$/,
           include: new RegExp(`node_modules\\${path.sep}acorn-jsx`),
           use: [
             {
-              loader: 'babel-loader',
+              loader: resolvedBabelLoader,
               options: {
                 presets: [[require.resolve('@babel/preset-env'), { modules: 'commonjs' }]],
               },
@@ -64,14 +101,14 @@ export function webpack(webpackConfig: any = {}, options: any = {}) {
           ],
         },
         {
-          test: /\.(stories|story).mdx$/,
+          test: /(stories|story)\.mdx$/,
           use: [
             {
-              loader: 'babel-loader',
-              options: createBabelOptions(babelOptions, configureJSX),
+              loader: resolvedBabelLoader,
+              options: createBabelOptions({ babelOptions, mdxBabelOptions, configureJSX }),
             },
             {
-              loader: '@mdx-js/loader',
+              loader: require.resolve('@mdx-js/loader'),
               options: {
                 compilers: [createCompiler(options)],
                 ...mdxLoaderOptions,
@@ -81,14 +118,14 @@ export function webpack(webpackConfig: any = {}, options: any = {}) {
         },
         {
           test: /\.mdx$/,
-          exclude: /\.(stories|story).mdx$/,
+          exclude: /(stories|story)\.mdx$/,
           use: [
             {
-              loader: 'babel-loader',
-              options: createBabelOptions(babelOptions, configureJSX),
+              loader: resolvedBabelLoader,
+              options: createBabelOptions({ babelOptions, mdxBabelOptions, configureJSX }),
             },
             {
-              loader: '@mdx-js/loader',
+              loader: require.resolve('@mdx-js/loader'),
               options: mdxLoaderOptions,
             },
           ],
@@ -97,20 +134,6 @@ export function webpack(webpackConfig: any = {}, options: any = {}) {
       ],
     },
   };
+
   return result;
-}
-
-export function managerEntries(entry: any[] = [], options: any) {
-  return [...entry, require.resolve('../../register')];
-}
-
-export function config(entry: any[] = [], options: any = {}) {
-  const { framework } = options;
-  const docsConfig = [require.resolve('./config')];
-  try {
-    docsConfig.push(require.resolve(`../${framework}/config`));
-  } catch (err) {
-    // there is no custom config for the user's framework, do nothing
-  }
-  return [...docsConfig, ...entry];
 }

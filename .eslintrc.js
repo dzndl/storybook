@@ -1,16 +1,18 @@
 module.exports = {
   root: true,
   extends: ['@storybook/eslint-config-storybook'],
+  rules: {
+    '@typescript-eslint/ban-ts-comment': 'warn',
+  },
   overrides: [
     {
       files: [
         '**/__tests__/**',
+        'scripts/**',
         '**/__testfixtures__/**',
         '**/*.test.*',
         '**/*.stories.*',
         '**/storyshots/**/stories/**',
-        'docs/src/new-components/lib/StoryLinkWrapper.js',
-        'docs/src/stories/**',
       ],
       rules: {
         '@typescript-eslint/no-empty-function': 'off',
@@ -26,6 +28,7 @@ module.exports = {
       },
     },
     { files: '**/.storybook/config.js', rules: { 'global-require': 'off' } },
+    { files: 'cypress/**', rules: { 'jest/expect-expect': 'off' } },
     {
       files: ['**/*.stories.*'],
       rules: {
@@ -35,7 +38,9 @@ module.exports = {
     {
       files: ['**/*.tsx', '**/*.ts'],
       rules: {
+        'react/require-default-props': 'off',
         'react/prop-types': 'off', // we should use types
+        'react/forbid-prop-types': 'off', // we should use types
         'no-dupe-class-members': 'off', // this is called overloads in typescript
       },
     },
@@ -45,6 +50,12 @@ module.exports = {
         'vars-on-top': 'off',
         'no-var': 'off', // this is how typescript works
         'spaced-comment': 'off',
+      },
+    },
+    {
+      files: ['**/mithril/**/*'],
+      rules: {
+        'react/no-unknown-property': 'off', // Need to deactivate otherwise eslint replaces some unknown properties with React ones
       },
     },
   ],

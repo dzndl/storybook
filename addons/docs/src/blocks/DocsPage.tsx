@@ -3,7 +3,8 @@ import { Title } from './Title';
 import { Subtitle } from './Subtitle';
 import { Description } from './Description';
 import { Primary } from './Primary';
-import { Props } from './Props';
+import { PRIMARY_STORY } from './types';
+import { ArgsTable } from './ArgsTable';
 import { Stories } from './Stories';
 
 export const DocsPage: FC = () => (
@@ -12,7 +13,7 @@ export const DocsPage: FC = () => (
     <Subtitle />
     <Description />
     <Primary />
-    <Props story="." />
+    <ArgsTable story={PRIMARY_STORY} />
     <Stories />
   </>
 );

@@ -1,11 +1,11 @@
 {
   "name": "@storybook/server",
-  "version": "6.0.0-alpha.40",
+  "version": "6.4.0-beta.0",
   "description": "Storybook for Server: View HTML snippets from a server in isolation with Hot Reloading.",
   "keywords": [
     "storybook"
   ],
-  "homepage": "https://github.com/storybookjs/storybook/tree/master/app/server",
+  "homepage": "https://github.com/storybookjs/storybook/tree/main/app/server",
   "bugs": {
     "url": "https://github.com/storybookjs/storybook/issues"
   },
@@ -14,9 +14,21 @@
     "url": "https://github.com/storybookjs/storybook.git",
     "directory": "app/server"
   },
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/storybook"
+  },
   "license": "MIT",
-  "main": "dist/client/index.js",
-  "types": "dist/client/index.d.ts",
+  "main": "dist/cjs/client/index.js",
+  "module": "dist/esm/client/index.js",
+  "types": "dist/ts3.9/client/index.d.ts",
+  "typesVersions": {
+    "<3.8": {
+      "dist/ts3.9/*": [
+        "dist/ts3.4/*"
+      ]
+    }
+  },
   "bin": {
     "build-storybook": "./bin/build.js",
     "start-storybook": "./bin/index.js",
@@ -27,34 +39,42 @@
     "dist/**/*",
     "README.md",
     "*.js",
-    "*.d.ts",
-    "ts3.5/**/*"
+    "*.d.ts"
   ],
   "scripts": {
     "prepare": "node ../../scripts/prepare.js"
   },
   "dependencies": {
-    "@storybook/addons": "6.0.0-alpha.40",
-    "@storybook/core": "6.0.0-alpha.40",
-    "@storybook/node-logger": "^5.2.8",
-    "@types/webpack-env": "^1.13.9",
-    "core-js": "^3.0.1",
-    "global": "^4.3.2",
-    "regenerator-runtime": "^0.13.3",
-    "safe-identifier": "^0.3.1",
-    "ts-dedent": "^1.1.1"
+    "@storybook/addons": "6.4.0-beta.0",
+    "@storybook/api": "6.4.0-beta.0",
+    "@storybook/client-api": "6.4.0-beta.0",
+    "@storybook/core": "6.4.0-beta.0",
+    "@storybook/core-common": "6.4.0-beta.0",
+    "@storybook/csf": "0.0.2--canary.6aca495.0",
+    "@storybook/node-logger": "6.4.0-beta.0",
+    "@storybook/preview-web": "6.4.0-beta.0",
+    "@storybook/store": "6.4.0-beta.0",
+    "@types/webpack-env": "^1.16.0",
+    "core-js": "^3.8.2",
+    "global": "^4.4.0",
+    "react": "16.14.0",
+    "react-dom": "16.14.0",
+    "read-pkg-up": "^7.0.1",
+    "regenerator-runtime": "^0.13.7",
+    "safe-identifier": "^0.4.1",
+    "ts-dedent": "^2.0.0",
+    "yaml-loader": "^0.6.0"
   },
   "devDependencies": {
-    "fs-extra": "^9.0.0"
-  },
-  "peerDependencies": {
-    "babel-loader": "^7.0.0 || ^8.0.0"
+    "fs-extra": "^9.0.1",
+    "yaml": "^1.10.0"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=10.13.0"
   },
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "6ad2664adf18b50ea3ce015cbae2ff3e9a60cc4a"
+  "gitHead": "44a855043cb0f43a03025df37cb105f4ce07d46f",
+  "sbmodern": "dist/modern/client/index.js"
 }

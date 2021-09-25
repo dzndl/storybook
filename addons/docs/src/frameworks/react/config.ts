@@ -1,13 +1,18 @@
-import { StoryFn } from '@storybook/addons';
+import { PartialStoryFn } from '@storybook/csf';
+import { ReactFramework } from '@storybook/react';
+
 import { extractArgTypes } from './extractArgTypes';
 import { extractComponentDescription } from '../../lib/docgen';
+import { jsxDecorator } from './jsxDecorator';
 
 export const parameters = {
   docs: {
-    // react is Storybook's "native" framework, so it's stories are inherently prepared to be rendered inline
+    inlineStories: true,
     // NOTE: that the result is a react element. Hooks support is provided by the outer code.
-    prepareForInline: (storyFn: StoryFn) => storyFn(),
+    prepareForInline: (storyFn: PartialStoryFn<ReactFramework>) => storyFn(),
     extractArgTypes,
     extractComponentDescription,
   },
 };
+
+export const decorators = [jsxDecorator];

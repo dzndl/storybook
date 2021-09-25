@@ -10,13 +10,13 @@ The preferred way to run these codemods is via the CLI's `migrate` command.
 To get a list of available codemods:
 
 ```
-npx -p @storybook/cli@next sb migrate --list
+npx sb migrate --list
 ```
 
 To run a codemod `<name-of-codemod>`:
 
 ```
-npx -p @storybook/cli@next sb migrate <name-of-codemod> --glob="**/*.stories.js"
+npx sb migrate <name-of-codemod> --glob="**/*.stories.js"
 ```
 
 ## Installation
@@ -227,7 +227,7 @@ story2.story = { name: 'second story' };
 Becomes:
 
 ```md
-import { Meta, Story } from '@storybook/addon-docs/blocks';
+import { Meta, Story } from '@storybook/addon-docs';
 
 # Button
 
@@ -253,7 +253,7 @@ For example:
 ```js
 import React from 'react';
 import Button from './Button';
-import { Meta, Story } from '@storybook/addon-docs/blocks';
+import { Meta, Story } from '@storybook/addon-docs';
 
 <Meta title='Button' />
 
@@ -305,3 +305,33 @@ export default {
   title: 'Foo/Bar/baz/whatever',
 };
 ```
+
+### csf-hoist-story-annotations
+
+Starting in 6.0, Storybook has deprecated the `.story` annotation in CSF and is using hoisted annotations.
+
+```sh
+./node_modules/.bin/jscodeshift -t ./node_modules/@storybook/codemod/dist/transforms/csf-hoist-story-annotations.js . --ignore-pattern "node_modules|dist" --extensions=js
+```
+
+For example:
+
+```js
+export const Basic = () => <Button />
+Basic.story = {
+  name: 'foo',
+  parameters: { ... },
+  decorators: [ ... ],
+};
+```
+
+Becomes:
+
+```js
+export const Basic = () => <Button />
+Basic.storyName = 'foo';
+Basic.parameters = { ... };
+Basic.decorators = [ ... ];
+```
+
+The new syntax is slightly more compact, is more ergonomic, and resembles React's `displayName`/`propTypes`/`defaultProps` annotations.

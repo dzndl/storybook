@@ -1,5 +1,5 @@
 <center>
-  <img src="https://raw.githubusercontent.com/storybookjs/storybook/master/addons/docs/docs/media/hero.png" width="100%" />
+  <img src="https://raw.githubusercontent.com/storybookjs/storybook/main/addons/docs/docs/media/hero.png" width="100%" />
 </center>
 
 # Storybook Docs
@@ -34,10 +34,10 @@ When you [install Docs](#installation), every story gets a `DocsPage`. `DocsPage
 Click on the `Docs` tab to see it:
 
 <center>
-  <img src="https://raw.githubusercontent.com/storybookjs/storybook/master/addons/docs/docs/media/docs-tab.png" width="100%" />
+  <img src="https://raw.githubusercontent.com/storybookjs/storybook/main/addons/docs/docs/media/docs-tab.png" width="100%" />
 </center>
 
-For more information on how it works, see the [`DocsPage` reference](./docs/docspage.md).
+For more information on how it works, see the [`DocsPage` reference](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/docspage.md).
 
 ## MDX
 
@@ -46,7 +46,7 @@ For more information on how it works, see the [`DocsPage` reference](./docs/docs
 Here's an example file:
 
 ```md
-import { Meta, Story, Preview } from '@storybook/addon-docs/blocks';
+import { Meta, Story, Canvas } from '@storybook/addon-docs';
 import { Checkbox } from './Checkbox';
 
 <Meta title="MDX/Checkbox" component={Checkbox} />
@@ -56,7 +56,7 @@ import { Checkbox } from './Checkbox';
 With `MDX` we can define a story for `Checkbox` right in the middle of our
 markdown documentation.
 
-<Preview>
+<Canvas>
   <Story name="all checkboxes">
     <form>
       <Checkbox id="Unchecked" label="Unchecked" />
@@ -64,35 +64,36 @@ markdown documentation.
       <Checkbox appearance="secondary" id="second" label="Secondary" checked />
     </form>
   </Story>
-</Preview>
+</Canvas>
 ```
 
 And here's how that's rendered in Storybook:
 
 <center>
-  <img src="https://raw.githubusercontent.com/storybookjs/storybook/master/addons/docs/docs/media/mdx-simple.png" width="100%" />
+  <img src="https://raw.githubusercontent.com/storybookjs/storybook/main/addons/docs/docs/media/mdx-simple.png" width="100%" />
 </center>
 
-For more information on `MDX`, see the [`MDX` reference](./docs/mdx.md).
+For more information on `MDX`, see the [`MDX` reference](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/mdx.md).
 
 ## Framework support
 
 Storybook Docs supports all view layers that Storybook supports except for React Native (currently). There are some framework-specific features as well, such as props tables and inline story rendering. This chart captures the current state of support:
 
-|                   | React | Vue | Angular | Ember | Web Components | HTML | Svelte | Preact | Riot | Mithril | Marko |
-| ----------------- | :---: | :-: | :-----: | :---: | :------------: | :--: | :----: | :----: | :--: | :-----: | :---: |
-| MDX stories       |   +   |  +  |    +    |   +   |       +        |  +   |   +    |   +    |  +   |    +    |   +   |
-| CSF stories       |   +   |  +  |    +    |   +   |       +        |  +   |   +    |   +    |  +   |    +    |   +   |
-| StoriesOf stories |   +   |  +  |    +    |   +   |       +        |  +   |   +    |   +    |  +   |    +    |   +   |
-| Source            |   +   |  +  |    +    |   +   |       +        |  +   |   +    |   +    |  +   |    +    |   +   |
-| Notes / Info      |   +   |  +  |    +    |   +   |       +        |  +   |   +    |   +    |  +   |    +    |   +   |
-| Props table       |   +   |  +  |    +    |   +   |       +        |      |        |        |      |         |       |
-| Description       |   +   |  +  |    +    |   +   |       +        |      |        |        |      |         |       |
-| Inline stories    |   +   |  +  |         |       |       +        |      |        |        |      |         |       |
+|                   | React | Vue | Angular | Ember | Web Components | Marko | HTML | Svelte | Preact | Riot | Mithril | Marko |
+| ----------------- | :---: | :-: | :-----: | :---: | :------------: | :---: | :--: | :----: | :----: | :--: | :-----: | :---: |
+| MDX stories       |   +   |  +  |    +    |   +   |       +        |  WIP  |  +   |   +    |   +    |  +   |    +    |   +   |
+| CSF stories       |   +   |  +  |    +    |   +   |       +        |  WIP  |  +   |   +    |   +    |  +   |    +    |   +   |
+| StoriesOf stories |   +   |  +  |    +    |   +   |       +        |  WIP  |  +   |   +    |   +    |  +   |    +    |   +   |
+| Source            |   +   |  +  |    +    |   +   |       +        |  WIP  |  +   |   +    |   +    |  +   |    +    |   +   |
+| Notes / Info      |   +   |  +  |    +    |   +   |       +        |  WIP  |  +   |   +    |   +    |  +   |    +    |   +   |
+| Props table       |   +   |  +  |    +    |   +   |       +        |  WIP  |      |        |        |      |         |       |
+| Props controls    |   +   |  +  |    +    |       |                |  WIP  |      |        |        |      |         |       |
+| Description       |   +   |  +  |    +    |   +   |       +        |  WIP  |      |        |        |      |         |       |
+| Inline stories    |   +   |  +  |    +    |       |       +        |  WIP  |  +   |        |        |      |         |       |
 
 **Note:** `#` = WIP support
 
-Want to add enhanced features to your favorite framework? Check out this [dev guide](./docs/multiframework.md)
+Want to add enhanced features to your favorite framework? Check out this [dev guide](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/multiframework.md)
 
 ## Installation
 
@@ -102,22 +103,22 @@ First add the package. Make sure that the versions for your `@storybook/*` packa
 yarn add -D @storybook/addon-docs
 ```
 
-Docs has peer dependencies on `react`, `react-is`, and `babel-loader`. If you want to write stories in MDX, you may need to add these dependencies as well:
+Docs has peer dependencies on `react`. If you want to write stories in MDX, you may need to add this dependency as well:
 
 ```sh
-yarn add -D react react-is babel-loader
+yarn add -D react
 ```
 
 Then add the following to your `.storybook/main.js`:
 
 ```js
 module.exports = {
-  stories: ['../src/**/*.stories.(js|mdx)'],
+  stories: ['../src/**/*.stories.@(js|mdx)'],
   addons: ['@storybook/addon-docs'],
 };
 ```
 
-If using in conjunction with the [storyshots add-on](../storyshots/storyshots-core/README.md), you will need to
+If using in conjunction with the [storyshots add-on](https://github.com/storybookjs/storybook/blob/next/addons/storyshots/storyshots-core/README.md), you will need to
 configure Jest to transform MDX stories into something Storyshots can understand:
 
 Add the following to your Jest configuration:
@@ -133,11 +134,12 @@ Add the following to your Jest configuration:
 
 ### Be sure to check framework specific installation needs
 
-- [React](./react) (covered here)
-- [Vue](./vue)
-- [Angular](./angular)
-- [Ember](./ember)
-- [Web Components](./web-components)
+- [React](https://github.com/storybookjs/storybook/tree/next/addons/docs/react) (covered here)
+- [Vue](https://github.com/storybookjs/storybook/tree/next/addons/docs/vue)
+- [Angular](https://github.com/storybookjs/storybook/tree/next/addons/docs/angular)
+- [Ember](https://github.com/storybookjs/storybook/tree/next/addons/docs/ember)
+- [Web Components](https://github.com/storybookjs/storybook/tree/next/addons/docs/web-components)
+- [Common setup (all other frameworks)](https://github.com/storybookjs/storybook/tree/next/addons/docs/common)
 
 ## Preset options
 
@@ -152,6 +154,7 @@ module.exports = {
         configureJSX: true,
         babelOptions: {},
         sourceLoaderOptions: null,
+        transcludeMarkdown: true,
       },
     },
   ],
@@ -161,6 +164,17 @@ module.exports = {
 The `configureJSX` option is useful when you're writing your docs in MDX and your project's babel config isn't already set up to handle JSX files. `babelOptions` is a way to further configure the babel processor when you're using `configureJSX`.
 
 `sourceLoaderOptions` is an object for configuring `@storybook/source-loader`. When set to `null` it tells docs not to run the `source-loader` at all, which can be used as an optimization, or if you're already using `source-loader` in your `main.js`.
+
+The `transcludeMarkdown` option enables mdx files to import `.md` files and render them as a component.
+
+```mdx
+import { Meta } from '@storybook/addon-docs';
+import Changelog from '../CHANGELOG.md';
+
+<Meta title="Changelog" />
+
+<Changelog />
+```
 
 ## Manual configuration
 
@@ -181,7 +195,8 @@ module.exports = {
       test: /\.(stories|story)\.mdx$/,
       use: [
         {
-          loader: 'babel-loader',
+          // Need to add babel-loader as dependency: `yarn add -D babel-loader`
+          loader: require.resolve('babel-loader'),
           // may or may not need this line depending on your app's setup
           options: {
             plugins: ['@babel/plugin-transform-react-jsx'],
@@ -212,7 +227,7 @@ You'll also need to set up the docs parameter in `.storybook/preview.js`. This i
 
 ```js
 import { addParameters } from '@storybook/react';
-import { DocsPage, DocsContainer } from '@storybook/addon-docs/blocks';
+import { DocsPage, DocsContainer } from '@storybook/addon-docs';
 
 addParameters({
   docs: {
@@ -224,17 +239,12 @@ addParameters({
 
 ## TypeScript configuration
 
-SB Docs for React uses `babel-plugin-react-docgen` to extract Docgen comments from your code automatically. However, if you're using TypeScript, some extra configuration maybe required to get this information included in your docs.
-
-1. You can add [react-docgen-typescript-loader](https://www.npmjs.com/package/react-docgen-typescript-loader) to your project by following the instructions there.
-2. You can use [@storybook/preset-typescript](https://www.npmjs.com/package/@storybook/preset-typescript) which includes `react-docgen-typescript-loader`.
-
-Install the preset with care. If you've already configured Typescript manually, that configuration may conflict with the preset. You can [debug your final webpack configuration with `--debug-webpack`](https://storybook.js.org/docs/configurations/custom-webpack-config/#debug-the-default-webpack-config).
+As of SB6 [TypeScript is zero-config](https://storybook.js.org/docs/react/configure/typescript) and should work with SB Docs out of the box. For advanced configuration options, refer to the [Props documentation](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/props-tables.md).
 
 ## More resources
 
 Want to learn more? Here are some more articles on Storybook Docs:
 
-- References: [DocsPage](./docs/docspage.md) / [MDX](./docs/mdx.md) / [FAQ](./docs/faq.md) / [Recipes](./docs/recipes.md) / [Theming](./docs/theming.md) / [Props](./docs/props-tables.md)
+- References: [DocsPage](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/docspage.md) / [MDX](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/mdx.md) / [FAQ](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/faq.md) / [Recipes](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/recipes.md) / [Theming](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/theming.md) / [Props](https://github.com/storybookjs/storybook/tree/next/addons/docs/docs/props-tables.md)
 - Announcements: [Vision](https://medium.com/storybookjs/storybook-docs-sneak-peak-5be78445094a) / [DocsPage](https://medium.com/storybookjs/storybook-docspage-e185bc3622bf) / [MDX](https://medium.com/storybookjs/rich-docs-with-storybook-mdx-61bc145ae7bc) / [Framework support](https://medium.com/storybookjs/storybook-docs-for-new-frameworks-b1f6090ee0ea)
 - Example: [Storybook Design System](https://github.com/storybookjs/design-system)

@@ -1,5 +1,6 @@
-import { document, setTimeout } from 'global';
+import global from 'global';
 
+const { document, setTimeout } = global;
 const text = 'Testing the a11y addon';
 
 export default {
@@ -14,7 +15,7 @@ export const Label = () => `<button>${text}</button>`;
 export const Disabled = () => `<button disabled>${text}</button>`;
 export const Story4 = () =>
   `<button style="color: black; background-color: brown;">${text}</button>`;
-Story4.story = { name: 'Invalid contrast' };
+Story4.storyName = 'Invalid contrast';
 
 export const Story5 = () => {
   const div = document.createElement('div');
@@ -23,4 +24,4 @@ export const Story5 = () => {
   }, 1000);
   return div;
 };
-Story5.story = { name: 'Delayed render' };
+Story5.storyName = 'Delayed render';

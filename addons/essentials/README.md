@@ -2,14 +2,18 @@
 
 Storybook Essentials is a curated collection of addons to bring out the best of Storybook.
 
-Each addon is documented and maintained by the core team and will be upgraded alongside Storybook as the platform evolves. We will also do our best to maintain [framework support](https://github.com/storybookjs/storybook/blob/master/ADDONS_SUPPORT.md) for all of the officially supported frameworks.
+Each addon is documented and maintained by the core team and will be upgraded alongside Storybook as the platform evolves. We will also do our best to maintain [framework support](https://github.com/storybookjs/storybook/blob/main/ADDONS_SUPPORT.md) for all of the officially supported frameworks.
 
 ## Contents
 
 Storybook essentials includes the following addons. Addons can be disabled and re-configured as [described below](#configuration):
 
+- [Actions](https://github.com/storybookjs/storybook/tree/next/addons/actions)
 - [Backgrounds](https://github.com/storybookjs/storybook/tree/next/addons/backgrounds)
+- [Controls](https://github.com/storybookjs/storybook/tree/next/addons/controls)
+- [Docs](https://github.com/storybookjs/storybook/tree/next/addons/docs)
 - [Viewport](https://github.com/storybookjs/storybook/tree/next/addons/viewport)
+- [Toolbars](https://github.com/storybookjs/storybook/tree/next/addons/toolbars)
 
 ## Installation
 
@@ -31,11 +35,11 @@ module.exports = {
 
 Essentials is "zero config." That means that comes with a recommended configuration out of the box.
 
-If you want to reconfigure an addon, simply install that addon per that addon's installation instructions and configure it as normal. Essentials scans your project's `package.json` on startup and if detects one of its addons is already installed, it will skip that addon's configuration entirely.
+If you want to reconfigure an addon, simply install that addon per that addon's installation instructions and configure it as normal. Essentials scans your project's `main.js` on startup and if detects one of its addons is already configured in the `addons` field, it will skip that addon's configuration entirely.
 
 ## Disabling addons
 
-Yuu can disable any of Essential's addons using the following configuration scheme in `.storybook/main.js`:
+You can disable any of Essential's addons using the following configuration scheme in `.storybook/main.js`:
 
 ```js
 module.exports = {
@@ -48,4 +52,4 @@ module.exports = {
 };
 ```
 
-Valid addon keys include: `backgrounds`, `viewport`
+Valid addon keys include: `actions`, `backgrounds`, `controls`, `docs`, `viewport`, `toolbars`.

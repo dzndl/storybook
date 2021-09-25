@@ -1,26 +1,36 @@
 import { combineParameters } from '@storybook/client-api';
-import { StoryContext, Parameters } from '@storybook/addons';
+import { Parameters } from '@storybook/addons';
+import { Story } from '@storybook/store';
 
-interface Location {
+// ============================================================
+// START @storybook/source-loader/extract-source
+//
+// This code duplicated because tree-shaking isn't working.
+// It's not DRY, but source-loader is on the chopping block for
+// the next version of addon-docs, so it's not the worst sin.
+// ============================================================
+
+interface SourceLoc {
   line: number;
   col: number;
 }
 
-interface StorySource {
-  source: string;
-  locationsMap: { [id: string]: { startBody: Location; endBody: Location } };
+interface SourceBlock {
+  startBody: SourceLoc;
+  endBody: SourceLoc;
+  startLoc: SourceLoc;
+  endLoc: SourceLoc;
 }
 
-const extract = (targetId: string, { source, locationsMap }: StorySource) => {
-  if (!locationsMap) {
-    return source;
-  }
-  const location = locationsMap[targetId];
+interface LocationsMap {
+  [key: string]: SourceBlock;
+}
 
-  // FIXME: bad locationsMap generated for module export functions whose titles are overridden
-  if (!location) return null;
+/**
+ * given a location, extract the text from the full source
+ */
+function extractSource(location: SourceBlock, lines: string[]): string | null {
   const { startBody: start, endBody: end } = location;
-  const lines = source.split('\n');
   if (start.line === end.line && lines[start.line - 1] !== undefined) {
     return lines[start.line - 1].substring(start.col, end.col);
   }
@@ -28,19 +38,49 @@ const extract = (targetId: string, { source, locationsMap }: StorySource) => {
   const startLine = lines[start.line - 1];
   const endLine = lines[end.line - 1];
   if (startLine === undefined || endLine === undefined) {
-    return source;
+    return null;
   }
   return [
     startLine.substring(start.col),
     ...lines.slice(start.line, end.line - 1),
     endLine.substring(0, end.col),
   ].join('\n');
+}
+
+// ============================================================
+// END @storybook/source-loader/extract-source
+// ============================================================
+
+interface StorySource {
+  source: string;
+  locationsMap: LocationsMap;
+}
+
+/**
+ * Replaces full story id name like: story-kind--story-name -> story-name
+ * @param id
+ */
+const storyIdToSanitizedStoryName = (id: string) => id.replace(/^.*?--/, '');
+
+const extract = (targetId: string, { source, locationsMap }: StorySource) => {
+  if (!locationsMap) {
+    return source;
+  }
+
+  const sanitizedStoryName = storyIdToSanitizedStoryName(targetId);
+  const location = locationsMap[sanitizedStoryName];
+  if (!location) {
+    return source;
+  }
+  const lines = source.split('\n');
+
+  return extractSource(location, lines);
 };
 
-export const enhanceSource = (context: StoryContext): Parameters => {
-  const { id, parameters } = context;
+export const enhanceSource = (story: Story<any>): Parameters => {
+  const { id, parameters } = story;
   const { storySource, docs = {} } = parameters;
-  const { formatSource } = docs;
+  const { transformSource } = docs;
 
   // no input or user has manually overridden the output
   if (!storySource?.source || docs.source?.code) {
@@ -48,7 +88,7 @@ export const enhanceSource = (context: StoryContext): Parameters => {
   }
 
   const input = extract(id, storySource);
-  const code = formatSource ? formatSource(input, id) : input;
+  const code = transformSource ? transformSource(input, story) : input;
 
   return { docs: combineParameters(docs, { source: { code } }) };
 };

@@ -15,7 +15,6 @@ export interface CompileCsfModuleArgs extends CompileStorybookSectionArgs {
 
 export interface StorybookStory {
   name: string;
-  storyFn: string;
   decorators?: string[];
   [x: string]: any;
 }
@@ -27,5 +26,3 @@ export interface StorybookSection {
   stories: StorybookStory[];
   [x: string]: any;
 }
-
-export type Decorator = (section: StorybookSection) => StorybookSection;

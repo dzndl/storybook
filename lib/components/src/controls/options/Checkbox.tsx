@@ -1,30 +1,44 @@
-import React, { FC, ChangeEvent, useState } from 'react';
+import React, { FC, ChangeEvent, useState, Fragment } from 'react';
 import { styled } from '@storybook/theming';
+import { logger } from '@storybook/client-logger';
 import { ControlProps, OptionsMultiSelection, NormalizedOptionsConfig } from '../types';
+import { selectedKeys, selectedValues } from './helpers';
+import { getControlId } from '../helpers';
 
-const CheckboxesWrapper = styled.div<{ isInline: boolean }>(({ isInline }) =>
+const Wrapper = styled.div<{ isInline: boolean }>(({ isInline }) =>
   isInline
     ? {
         display: 'flex',
         flexWrap: 'wrap',
-        alignItems: 'center',
-        '> * + *': {
-          marginLeft: 10,
+        alignItems: 'flex-start',
+
+        label: {
+          display: 'inline-flex',
+          marginRight: 15,
         },
       }
-    : {}
+    : {
+        label: {
+          display: 'flex',
+        },
+      }
 );
 
-const CheckboxFieldset = styled.fieldset({
-  border: 0,
-  padding: 0,
-  margin: 0,
-});
+const Text = styled.span({});
 
-const CheckboxLabel = styled.label({
-  padding: '3px 0 3px 5px',
-  lineHeight: '18px',
-  display: 'inline-block',
+const Label = styled.label({
+  lineHeight: '20px',
+  alignItems: 'center',
+  marginBottom: 8,
+
+  '&:last-child': {
+    marginBottom: 0,
+  },
+
+  input: {
+    margin: 0,
+    marginRight: 6,
+  },
 });
 
 type CheckboxConfig = NormalizedOptionsConfig & { isInline: boolean };
@@ -36,42 +50,46 @@ export const CheckboxControl: FC<CheckboxProps> = ({
   onChange,
   isInline,
 }) => {
-  const [selected, setSelected] = useState(value || []);
+  if (!options) {
+    logger.warn(`Checkbox with no options: ${name}`);
+    return <>-</>;
+  }
+
+  const initial = selectedKeys(value, options);
+  const [selected, setSelected] = useState(initial);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const option = (e.target as HTMLInputElement).value;
-    const newVal = [...selected];
-    if (newVal.includes(option)) {
-      newVal.splice(newVal.indexOf(option), 1);
+    const updated = [...selected];
+    if (updated?.includes(option)) {
+      updated.splice(updated.indexOf(option), 1);
     } else {
-      newVal.push(option);
+      updated.push(option);
     }
-    onChange(name, newVal);
-    setSelected(newVal);
+    onChange(selectedValues(updated, options));
+    setSelected(updated);
   };
 
-  return (
-    <CheckboxFieldset>
-      <CheckboxesWrapper isInline={isInline}>
-        {Object.keys(options).map((key: string) => {
-          const id = `${name}-${key}`;
-          const optionValue = options[key];
+  const controlId = getControlId(name);
 
-          return (
-            <div key={id}>
-              <input
-                type="checkbox"
-                id={id}
-                name={name}
-                value={optionValue}
-                onChange={handleChange}
-                checked={selected.includes(optionValue)}
-              />
-              <CheckboxLabel htmlFor={id}>{key}</CheckboxLabel>
-            </div>
-          );
-        })}
-      </CheckboxesWrapper>
-    </CheckboxFieldset>
+  return (
+    <Wrapper isInline={isInline}>
+      {Object.keys(options).map((key, index) => {
+        const id = `${controlId}-${index}`;
+        return (
+          <Label key={id} htmlFor={id}>
+            <input
+              type="checkbox"
+              id={id}
+              name={id}
+              value={key}
+              onChange={handleChange}
+              checked={selected?.includes(key)}
+            />
+            <Text>{key}</Text>
+          </Label>
+        );
+      })}
+    </Wrapper>
   );
 };

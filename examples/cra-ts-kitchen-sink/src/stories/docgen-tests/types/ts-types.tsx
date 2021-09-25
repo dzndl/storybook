@@ -46,7 +46,9 @@ type StringAlias = string;
 type NumberAlias = number;
 type AliasesIntersection = StringAlias & NumberAlias;
 type AliasesUnion = StringAlias | NumberAlias;
-type GenericAlias<T> = { value: T };
+interface GenericAlias<T> {
+  value: T;
+}
 
 interface TypeScriptPropsProps {
   any: any;
@@ -75,7 +77,7 @@ interface TypeScriptPropsProps {
   intersectionWithInlineType: ItemInterface & { inlineValue: string };
   unionOfPrimitive: string | number;
   unionOfComplexType: ItemInterface | InterfaceIntersection;
-  nullablePrimitve?: string;
+  nullablePrimitive?: string;
   nullableComplexType?: ItemInterface;
   nullableComplexTypeUndefinedDefaultValue?: ItemInterface;
   readonly readonlyPrimitive: string;

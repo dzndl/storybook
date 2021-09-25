@@ -7,6 +7,7 @@ export interface PreviewProps {
   api: API;
   viewMode: ViewMode;
   refs: State['refs'];
+  storyId: Story['id'];
   story: Group | Story;
   docsOnly: boolean;
   options: {
@@ -31,9 +32,9 @@ export interface WrapperProps {
   active: boolean;
 }
 
-export type Wrapper = {
+export interface Wrapper {
   render: FunctionComponent<WrapperProps>;
-};
+}
 
 export interface ApplyWrappersProps {
   wrappers: Wrapper[];

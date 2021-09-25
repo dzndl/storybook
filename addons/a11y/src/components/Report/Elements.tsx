@@ -24,7 +24,10 @@ const HighlightToggleElement = styled.span({
   fontWeight: 'normal',
   alignSelf: 'center',
   paddingRight: 15,
-  input: { margin: 0 },
+  input: {
+    margin: 0,
+    display: 'block',
+  },
 });
 
 interface ElementProps {
@@ -36,19 +39,13 @@ const Element: FunctionComponent<ElementProps> = ({ element, type }) => {
   const { any, all, none } = element;
   const rules = [...any, ...all, ...none];
   const highlightToggleId = `${type}-${element.target[0]}`;
-  const highlightLabel = `Highlight`;
 
   return (
     <Item>
       <ItemTitle>
         {element.target[0]}
         <HighlightToggleElement>
-          <HighlightToggle
-            toggleId={highlightToggleId}
-            type={type}
-            elementsToHighlight={[element]}
-            label={highlightLabel}
-          />
+          <HighlightToggle toggleId={highlightToggleId} elementsToHighlight={[element]} />
         </HighlightToggleElement>
       </ItemTitle>
       <Rules rules={rules} />

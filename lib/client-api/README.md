@@ -12,12 +12,13 @@ Each story is loaded via the `.add()` API and contains the follow attributes, wh
 - `parameters` - static data about the story, see below.
 - `args` - dynamic inputs to the story, see below.
 - `hooks` - listeners that will rerun when the story changes or is unmounted, see `@storybook/addons`.
+- `viewMode` - property that tells if the story is being rendered in Canvas or Docs tab. Values are `story` for canvas and `docs` for docs.
 
 ## Parameters
 
 The story parameters is a static, serializable object of data that provides details about the story. Those details can be used by addons or Storybook itself to render UI or provide defaults about the story rendering.
 
-Parameters _cannot change_ and are syncronized to the manager once when the story is loaded (note over the lifetime of a development Storybook a story can be loaded several times due to hot module reload, so the parameters technically can change for that reason).
+Parameters _cannot change_ and are synchronized to the manager once when the story is loaded (note over the lifetime of a development Storybook a story can be loaded several times due to hot module reload, so the parameters technically can change for that reason).
 
 Usually addons will read from a single key of `parameters` namespaced by the name of that addon. For instance the configuration of the `backgrounds` addon is driven by the `parameters.backgrounds` namespace.
 
@@ -36,6 +37,8 @@ However, in some cases it is necessary to set parameters at _load time_ when the
 
 To add a parameter enhancer, call `store.addArgTypesEnhancer(enhancer)` _before_ any stories are loaded (in addon registration or in `preview.js`). As each story is loaded, the enhancer will be called with the full story `context` -- the return value should be an object that will be patched into the Story's `argTypes`.
 
+There is a default enhancer that ensures that each `arg` in a story has a baseline `argType`. This value can be improved by subsequent enhancers, e.g. those provided by `@storybook/addon-docs`.
+
 ## Args
 
 Args are "inputs" to stories.
@@ -46,16 +49,16 @@ Changing the args cause the story to be re-rendered with the new set of args.
 
 ### Using args in a story
 
-By default, args are passed to a story in the context; like parameters, they are available as `context.args`.
-
-```js
-const YourStory = ({ args: { x, y }}) => /* render your story using `x` and `y` */
-```
-
-If you set the `parameters.options.passArgsFirst` option on a story, then the args will be passed to the story as first argument and the context as second:
+By default (starting in 6.0) the args will be passed to the story as first argument and the context as second:
 
 ```js
 const YourStory = ({ x, y } /*, context*/) => /* render your story using `x` and `y` */
+```
+
+If you set the `parameters.options.passArgsFirst` option on a story to false, args are passed to a story in the context, preserving the pre-6.0 story API; like parameters, they are available as `context.args`.
+
+```js
+const YourStory = ({ args: { x, y }}) => /* render your story using `x` and `y` */
 ```
 
 ### Arg types and values
@@ -70,24 +73,22 @@ For instance, for this story:
 
 ```js
 export MyStory = ....
-MyStory.story = {
-  argTypes: {
-    primary: { defaultValue: true, /* other things */ },
-    size: { /* other things */ },
-    color: { /* other things */ },
-  },
-  args: {
-    size: 'large',
-    extra: 'prop',
-  }
-}
+MyStory.argTypes = {
+  primary: { defaultValue: true, /* other things */ },
+  size: { /* other things */ },
+  color: { /* other things */ },
+};
+MyStory.args = {
+  size: 'large',
+  extra: 'prop',
+};
 ```
 
 Then `context.args` will default to `{ primary: true, size: 'large', extra: 'prop' }`.
 
 ### Using args in an addon
 
-Args values are automatically syncronized (via the `changeStoryArgs` and `storyArgsChanged` events) between the preview and manager; APIs exist in `lib/api` to read and set args in the manager.
+Args values are automatically synchronized (via the `changeStoryArgs` and `storyArgsChanged` events) between the preview and manager; APIs exist in `lib/api` to read and set args in the manager.
 
 Args need to be serializable -- so currently cannot include callbacks (this may change in a future version).
 
@@ -109,14 +110,14 @@ Global args are args that are "global" across all stories. They are used for thi
 
 ### Initial values of global args
 
-To set initial values of global args, set the `parameters.globalArgs` parameters. Addons can use parameter enhancers (see above) to do this.
+To set initial values of global args, set the `parameters.globals` parameters. Addons can use parameter enhancers (see above) to do this.
 
 ### Using global args in an addon
 
-Similar to args, global args are syncronized to the manager and can be accessed via the `useGlobalArgs` hook.
+Similar to args, global args are synchronized to the manager and can be accessed via the `useGlobals` hook.
 
 ```js
-import { useGlobalArgs } from '@storybook/client-api'; // or '@storybook/api'
+import { useGlobals } from '@storybook/client-api'; // or '@storybook/api'
 
-const [globalArgs, updateGlobalArgs] = useGlobalArgs();
+const [globals, updateGlobals] = useGlobals();
 ```

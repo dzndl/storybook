@@ -1,23 +1,30 @@
-import { PropDef, PropsTableRowsProps } from '@storybook/components';
-import { ArgTypes } from '@storybook/api';
-import { ArgTypesExtractor } from '../../lib/docgen';
+import { StrictArgTypes } from '@storybook/csf';
+import { PropDef, ArgTypesExtractor } from '../../lib/docgen';
 import { extractProps } from './extractProps';
 
 export const extractArgTypes: ArgTypesExtractor = (component) => {
   if (component) {
-    const props = extractProps(component);
-    const { rows } = props as PropsTableRowsProps;
+    const { rows } = extractProps(component);
     if (rows) {
-      return rows.reduce((acc: ArgTypes, row: PropDef) => {
-        const { type, sbType, defaultValue, jsDocTags } = row;
-        acc[row.name] = {
-          ...row,
-          defaultValue: defaultValue && (defaultValue.detail || defaultValue.summary),
-          type: sbType,
+      return rows.reduce((acc: StrictArgTypes, row: PropDef) => {
+        const {
+          name,
+          description,
+          type,
+          sbType,
+          defaultValue: defaultSummary,
+          jsDocTags,
+          required,
+        } = row;
+
+        acc[name] = {
+          name,
+          description,
+          type: { required, ...sbType },
           table: {
             type,
             jsDocTags,
-            defaultValue,
+            defaultValue: defaultSummary,
           },
         };
         return acc;

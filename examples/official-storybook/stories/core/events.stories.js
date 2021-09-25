@@ -1,5 +1,5 @@
 import React from 'react';
-import addons from '@storybook/addons';
+import { addons } from '@storybook/addons';
 import Events from '@storybook/core-events';
 import { Button } from '@storybook/components';
 
@@ -14,4 +14,4 @@ export default {
 };
 
 export const Force = () => <Button onClick={increment}>Clicked: {timesClicked}</Button>;
-Force.story = { name: 'Force re-render' };
+Force.storyName = 'Force re-render';

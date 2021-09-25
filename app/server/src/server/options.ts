@@ -1,8 +1,8 @@
-// tslint:disable-next-line: no-var-requires
-const packageJson = require('../../package.json');
+import { sync } from 'read-pkg-up';
+import { LoadOptions } from '@storybook/core-common';
 
 export default {
-  packageJson,
+  packageJson: sync({ cwd: __dirname }).packageJson,
   framework: 'server',
   frameworkPresets: [require.resolve('./framework-preset-server.js')],
-};
+} as LoadOptions;

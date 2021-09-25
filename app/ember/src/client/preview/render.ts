@@ -1,13 +1,16 @@
-import { window, document } from 'global';
+import global from 'global';
 import dedent from 'ts-dedent';
-import { RenderContext, ElementArgs, OptionsArgs } from './types';
+import { RenderContext } from '@storybook/store';
+import { OptionsArgs, EmberFramework } from './types';
+
+const { window: globalWindow, document } = global;
 
 declare let Ember: any;
 
 const rootEl = document.getElementById('root');
 
-const config = window.require(`${window.STORYBOOK_NAME}/config/environment`);
-const app = window.require(`${window.STORYBOOK_NAME}/app`).default.create({
+const config = globalWindow.require(`${globalWindow.STORYBOOK_NAME}/config/environment`);
+const app = globalWindow.require(`${globalWindow.STORYBOOK_NAME}/app`).default.create({
   autoboot: false,
   rootElement: rootEl,
   ...config.APP,
@@ -15,8 +18,12 @@ const app = window.require(`${window.STORYBOOK_NAME}/app`).default.create({
 
 let lastPromise = app.boot();
 let hasRendered = false;
+let isRendering = false;
 
-function render(options: OptionsArgs, el: ElementArgs) {
+function render(options: OptionsArgs, el: HTMLElement) {
+  if (isRendering) return;
+  isRendering = true;
+
   const { template, context = {}, element } = options;
 
   if (hasRendered) {
@@ -47,12 +54,16 @@ function render(options: OptionsArgs, el: ElementArgs) {
         component.appendTo(el);
       }
       hasRendered = true;
+      isRendering = false;
 
       return instance;
     });
 }
 
-export default function renderMain({ storyFn, kind, name, showMain, showError }: RenderContext) {
+export function renderToDOM(
+  { storyFn, kind, name, showMain, showError }: RenderContext<EmberFramework>,
+  domElement: HTMLElement
+) {
   const element = storyFn();
 
   if (!element) {
@@ -69,5 +80,5 @@ export default function renderMain({ storyFn, kind, name, showMain, showError }:
   }
 
   showMain();
-  render(element, rootEl);
+  render(element, domElement);
 }

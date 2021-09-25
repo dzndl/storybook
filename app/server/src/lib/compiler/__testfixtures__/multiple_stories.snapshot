@@ -3,35 +3,32 @@
 exports[`json-to-csf-compiler multiple_stories.json 1`] = `
 "
 export default {
-  title: 'Demo',
+  title: \\"Demo\\",
 };
 
-export const Heading = () => {};
-Heading.story = {
-  name: 'Heading',
+export const Heading = {
+  name: \\"Heading\\",
   parameters: {
     server: {
-      id: 'demo/heading'
+      id: \\"demo/heading\\"
     }
   }
 };
 
-export const Headings = () => {};
-Headings.story = {
-  name: 'Headings',
+export const Headings = {
+  name: \\"Headings\\",
   parameters: {
     server: {
-      id: 'demo/headings'
+      id: \\"demo/headings\\"
     }
   }
 };
 
-export const Button = () => {};
-Button.story = {
-  name: 'Button',
+export const Button = {
+  name: \\"Button\\",
   parameters: {
     server: {
-      id: 'demo/button'
+      id: \\"demo/button\\"
     }
   }
 };

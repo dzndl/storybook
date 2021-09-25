@@ -1,76 +1,108 @@
-import { TransformOptions } from '@babel/core';
+import ReactDocgenTypescriptPlugin from '@storybook/react-docgen-typescript-plugin';
+import type { TypescriptConfig } from '@storybook/core-common';
 import * as preset from './framework-preset-react-docgen';
 
 describe('framework-preset-react-docgen', () => {
   const babelPluginReactDocgenPath = require.resolve('babel-plugin-react-docgen');
 
-  it('should return the config with the extra plugins when `plugins` is an array.', () => {
+  it('should return the babel config with the extra plugin', async () => {
     const babelConfig = {
       babelrc: false,
       presets: ['env', 'foo-preset'],
       plugins: ['foo-plugin'],
     };
 
-    const config = preset.babel(babelConfig);
+    const config = await preset.babel(babelConfig, {
+      presets: {
+        // @ts-ignore
+        apply: async () =>
+          ({
+            check: false,
+            reactDocgen: 'react-docgen',
+          } as TypescriptConfig),
+      },
+    } as any);
 
     expect(config).toEqual({
       babelrc: false,
-      plugins: [
-        'foo-plugin',
-        [
-          babelPluginReactDocgenPath,
-          {
-            DOC_GEN_COLLECTION_NAME: 'STORYBOOK_REACT_CLASSES',
-          },
-        ],
-      ],
+      plugins: ['foo-plugin'],
       presets: ['env', 'foo-preset'],
+      overrides: [
+        {
+          test: /\.(mjs|tsx?|jsx?)$/,
+          plugins: [
+            [
+              babelPluginReactDocgenPath,
+              {
+                DOC_GEN_COLLECTION_NAME: 'STORYBOOK_REACT_CLASSES',
+              },
+            ],
+          ],
+        },
+      ],
     });
   });
 
-  it('should return the config with the extra plugins when `plugins` is not an array.', () => {
-    const babelConfig: TransformOptions = {
-      babelrc: false,
-      presets: ['env', 'foo-preset'],
-      plugins: ['bar-plugin'],
+  it('should return the webpack config with the extra plugin', async () => {
+    const webpackConfig = {
+      plugins: [],
     };
 
-    const config = preset.babel(babelConfig);
+    const config = await preset.webpackFinal(webpackConfig, {
+      presets: {
+        // @ts-ignore
+        apply: async () =>
+          ({
+            check: false,
+            reactDocgen: 'react-docgen-typescript',
+          } as TypescriptConfig),
+      },
+    });
 
     expect(config).toEqual({
-      babelrc: false,
-      plugins: [
-        'bar-plugin',
-        [
-          babelPluginReactDocgenPath,
-          {
-            DOC_GEN_COLLECTION_NAME: 'STORYBOOK_REACT_CLASSES',
-          },
-        ],
-      ],
-      presets: ['env', 'foo-preset'],
+      plugins: [expect.any(ReactDocgenTypescriptPlugin)],
     });
   });
 
-  it('should return the config only with the extra plugins when `plugins` is not present.', () => {
+  it('should not add any extra plugins', async () => {
     const babelConfig = {
       babelrc: false,
       presets: ['env', 'foo-preset'],
+      plugins: ['foo-plugin'],
     };
 
-    const config = preset.babel(babelConfig);
+    const webpackConfig = {
+      plugins: [],
+    };
 
-    expect(config).toEqual({
+    const outputBabelconfig = await preset.babel(babelConfig, {
+      presets: {
+        // @ts-ignore
+        apply: async () =>
+          ({
+            check: false,
+            reactDocgen: false,
+          } as TypescriptConfig),
+      },
+    });
+    const outputWebpackconfig = await preset.webpackFinal(webpackConfig, {
+      presets: {
+        // @ts-ignore
+        apply: async () =>
+          ({
+            check: false,
+            reactDocgen: false,
+          } as TypescriptConfig),
+      },
+    });
+
+    expect(outputBabelconfig).toEqual({
       babelrc: false,
-      plugins: [
-        [
-          babelPluginReactDocgenPath,
-          {
-            DOC_GEN_COLLECTION_NAME: 'STORYBOOK_REACT_CLASSES',
-          },
-        ],
-      ],
       presets: ['env', 'foo-preset'],
+      plugins: ['foo-plugin'],
+    });
+    expect(outputWebpackconfig).toEqual({
+      plugins: [],
     });
   });
 });
